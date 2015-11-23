@@ -1,6 +1,7 @@
 package ch.ethz.ir.g19
 
 import ch.ethz.dal.tinyir.io._
+import ch.ethz.dal.tinyir.processing._
 import java.io.File
 
 object RetrievalSystem {
@@ -15,9 +16,14 @@ object RetrievalSystem {
 //    println("Number of documents = " + docs.length)
 //    val zipList = docs.ziplist
     
-    val tipS = new TipsterStream(path)
+    
+    val tipI = new TipsterCorpusIterator(path)
+   // val tipS = new TipsterStream(path)
     //tipS.
-    val xmlDoc = tipS.stream.foreach { x => println(x.name) }
+    //val xmlDoc = tipI.stream.foreach { x => println(x.name) }
+    while(tipI.hasNext){
+      println(tipI.next().name)
+    }
     
 
     
