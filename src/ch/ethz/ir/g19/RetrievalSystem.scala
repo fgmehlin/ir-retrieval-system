@@ -48,6 +48,6 @@ object RetrievalSystem {
         currentScores += did -> q.map(wq => m.getOrElse(wq, 0.0) * idfs.getOrElse(wq, 0.0)).sum
       scores += currentScores
     }
-    scores
+    scores.toList
   }
 }
