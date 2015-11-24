@@ -15,9 +15,9 @@ object TermFrequencies {
   }
     
   def logtf(tf: Map[String,Int]) : Map[String, Double] = 
-    tf.mapValues(v => log2(v.toDouble/tf.values.sum)+1.0)
+    tf.mapValues(v => log2(v.toDouble/tf.values.sum + 1.0))
   
-    def idf(df: Map[String,Int], n: Int) : Map[String, Double] = 
+  def idf(df: Map[String,Int], n: Int) : Map[String, Double] = 
     df.mapValues(log10(n) - log10(_))
 
   def log2 (x : Double) = log10(x)/log10(2.0)
