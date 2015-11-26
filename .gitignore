@@ -1,4 +1,5 @@
 .cache-main
+.DS_Store
 *.orig
 bin/
 tipster/
