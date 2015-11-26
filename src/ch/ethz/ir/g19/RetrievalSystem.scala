@@ -7,17 +7,9 @@ import ch.ethz.dal.tinyir.processing._
 
 import scala.collection.mutable.{ Map => MutMap }
 import scala.collection.mutable.ListBuffer
-import scala.collection.mutable.PriorityQueue
-import scala.util.Try
-
-object MinOrder extends Ordering[Tuple2[Double, String]] {
-  def compare(x:Tuple2[Double, String], y:Tuple2[Double, String]) =
-      y._1 compare x._1
-}
 
 object RetrievalSystem {
   val dfs = collection.mutable.Map[String, Int]()
-  val tfidfScores = ListBuffer[PriorityQueue[Tuple2[Double, String]]]()
   var corpusSize = 0
   val n = 2
 
@@ -26,8 +18,7 @@ object RetrievalSystem {
         new Query("company profitability revenue earnings"),
         new Query("pepsi"))
     val queries = originalQueries.map(q => normalize(q.qterms))
-    for (i <- 0 until queries.size)
-      tfidfScores += PriorityQueue.empty(MinOrder)
+    val tfidf = new Ranking(n, queries.size)
 
     val path = "tipster/zips"
     var corpus = new TipsterCorpusIterator(path)
@@ -46,20 +37,10 @@ object RetrievalSystem {
       val doc = corpus.next
       val tokens = normalize(doc.tokens)
       val logtfs = TermFrequencies.logtf(tokens)
-      val docScores = scoreTFIDF(logtfs, idfs, queries)
-      for (i <- 0 until queries.size) {
-        val pq = tfidfScores.apply(i)
-        val newTuple = Tuple2(docScores.apply(i), doc.name)
-        if (pq.size < n) {
-          pq.enqueue(newTuple)
-        } else {
-          val deq = pq.dequeue()
-          pq.enqueue(List(deq, newTuple).maxBy(_._1))
-        }
-      }
+      tfidf.processScores(doc.name, scoreTFIDF(logtfs, idfs, queries))
       corpusSize += 1
     }
-    println(tfidfScores)
+    println(tfidf.r)
   }
 
   def normalize(tokens: List[String]) =
