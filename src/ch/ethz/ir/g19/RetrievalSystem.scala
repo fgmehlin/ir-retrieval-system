@@ -12,6 +12,8 @@ import scala.collection.mutable.ListBuffer
 object RetrievalSystem {
   val dfs = collection.mutable.Map[String, Int]()
   val cfs = collection.mutable.Map[String, Int]()
+  val topicProba = collection.mutable.Map[Int, Double]()
+  var sumcf = 0.0
 
   var corpusSize = 0
   val n = 5
@@ -34,7 +36,25 @@ object RetrievalSystem {
     val qrelsPath = "tipster/qrels"
 
     // First pass
-   
+    var currentTopic = 0
+    var countDocs = 0
+    for(line <- Source.fromFile(qrelsPath).getLines()){
+      val lineSplit = line.split("\\s+")
+      val topic = lineSplit.apply(0).toInt
+      if(topic != currentTopic)
+        currentTopic = topic
+      val document = lineSplit.apply(2)
+      val relevance = lineSplit.apply(3).toInt
+      if(relevance == 1){
+        topicProba.update(topic, topicProba.getOrElse(topic, 0.0)+1)
+     // println(topicProba)
+        countDocs+=1
+      }
+    }
+    
+    topicProba.transform{ (key, value) => value/countDocs }
+    val sumProba = topicProba.values.sum
+    println(sumProba)
     var corpus = new TipsterCorpusIterator(path)
     while (corpus.hasNext && corpusSize < 25) {
       val doc = corpus.next
