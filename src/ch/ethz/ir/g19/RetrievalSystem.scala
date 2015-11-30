@@ -100,7 +100,7 @@ object RetrievalSystem {
   /** Compute the tfidf score for all queries against a document */
   def scoreTFIDF(logtfs: Map[String, Double], idfs: Map[String, Double],
     queries: List[List[String]]) = {
-    val scores = ListBuffer[Double]()
+    val scores = ArrayBuffer[Double]()
     for (q <- queries) {
       scores += q.map(qword =>
         logtfs.getOrElse(qword, 0.0) * idfs.getOrElse(qword, 0.0)).sum
@@ -109,7 +109,7 @@ object RetrievalSystem {
   }
 
   def MLE(tfs: Map[String, Int], queries: List[List[String]]) = {
-    val scores = ListBuffer[Double]()
+    val scores = ArrayBuffer[Double]()
     val sumtf = tfs.values.sum.toDouble
     val lambda = Math.max(1 - (tfs.keys.size.toDouble - docminlen) / (docmaxlen - docminlen), 0.1)
     for (q <- queries) {
