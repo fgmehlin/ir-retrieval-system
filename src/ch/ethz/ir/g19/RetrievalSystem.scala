@@ -15,6 +15,7 @@ object RetrievalSystem {
   val dfs = MutMap[String, Int]()
   val cfs = MutMap[String, Int]()
   val topicProba = MutMap[Int, Double]()
+  var relevantTraining = List[String]()
   var sumcf = 0.0
 
   var corpusSize = 0
@@ -61,6 +62,7 @@ object RetrievalSystem {
       val document = lineSplit.apply(2)
       val relevance = lineSplit.apply(3).toInt
       if(relevance == 1){
+        relevantTraining ::= document
         topicProba.update(topic, topicProba.getOrElse(topic, 0.0)+1)
      // println(topicProba)
         countDocs+=1
