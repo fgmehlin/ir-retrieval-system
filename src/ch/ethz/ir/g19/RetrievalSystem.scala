@@ -46,12 +46,13 @@ object RetrievalSystem {
     
     val testQueries = QueryReader.readQuery(topicsQueries)
     val queries = testQueries.map(q => normalize(q.qterms)) 
+    println("query list size : " +  queries.size)
     
     val tfidfRanking = new Ranking(n, queries.size)
     val mleRanking = new Ranking(n, queries.size)
     
     
-    // First pass
+    // Read qrels
     var currentTopic = 0
     var countDocs = 0
     for(line <- Source.fromFile(qrelsPath).getLines()){
@@ -70,13 +71,13 @@ object RetrievalSystem {
     }
     
     
-  
+  // First pass
     
     topicProba.transform{ (key, value) => value/countDocs }
     val sumProba = topicProba.values.sum
-    println(sumProba)
+   // println(sumProba)
     var corpus = new TipsterCorpusIterator(path)
-    while (corpus.hasNext /*&& corpusSize < 25*/) {
+    while (corpus.hasNext && corpusSize < 10000) {
       val doc = corpus.next
       val tokens = normalize(doc.tokens)
       val tf = TermFrequencies.tf(tokens)
@@ -93,7 +94,7 @@ object RetrievalSystem {
     // Second pass
     corpusSize = 0
     corpus = new TipsterCorpusIterator(path)
-    while (corpus.hasNext/* && corpusSize < 25*/) {
+    while (corpus.hasNext && corpusSize < 10000) {
       val doc = corpus.next
       val tokens = normalize(doc.tokens)
       // tfidf
@@ -104,8 +105,8 @@ object RetrievalSystem {
       mleRanking.processScores(doc.name, MLE(tfs, queries))
       corpusSize += 1
     }
-    println(tfidfRanking.r)
-    println(mleRanking.r)
+    println(tfidfRanking)
+    println(mleRanking)
     
     
     
