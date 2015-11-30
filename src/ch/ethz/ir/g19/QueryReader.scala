@@ -8,7 +8,7 @@ object QueryReader {
     Source.fromFile(path)
         .getLines
         .filter(_.startsWith("<title>"))
-        .map(l => new Query(l.split("<title> Topic:\\s+").apply(1)))
+        .map(l => new Query(l.split("Topic:\\s+").apply(1).trim))
         .toList
   }
 }
