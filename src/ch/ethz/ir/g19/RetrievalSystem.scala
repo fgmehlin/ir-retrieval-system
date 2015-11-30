@@ -39,11 +39,12 @@ object RetrievalSystem {
         .toList
         .map(_.split(" "))
         .groupBy(_.head)
-        .mapValues(l => l.map(_.apply(2)).toSet)
+        .mapValues(l => l.map(_.apply(2).replaceAll("-", "")).toSet)
     // First pass
     var corpus = new TipsterCorpusIterator(path)
     while (corpus.hasNext && corpusSize < 100000) {
       val doc = corpus.next
+      print(corpusSize+"\r")
       val tokens = normalize(doc.tokens)
       val tf = TermFrequencies.tf(tokens)
       dfStore(tf)
@@ -61,6 +62,7 @@ object RetrievalSystem {
     corpus = new TipsterCorpusIterator(path)
     while (corpus.hasNext && corpusSize < 100000) {
       val doc = corpus.next
+      print(corpusSize+"\r")
       val tokens = normalize(doc.tokens)
       // tfidf
       val logtfs = TermFrequencies.logtf(tokens)
