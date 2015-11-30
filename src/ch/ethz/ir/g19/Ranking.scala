@@ -32,6 +32,6 @@ class Ranking(n: Int, nq: Int) {
     val l = ArrayBuffer[List[Tuple2[Double, String]]]()
     r.foreach(pq => l.append(pq.toList))
     val sortedl = l.map(_.sortBy(x => - x._1))
-    sortedl.toList.toString
+    sortedl.toList.mkString("", "\n", "")
   }
 }
