@@ -12,8 +12,6 @@ import scala.collection.mutable.{ Map => MutMap }
 object RetrievalSystem {
   val dfs = MutMap[String, Int]()
   val cfs = MutMap[String, Int]()
-  val topicProba = MutMap[Int, Double]()
-  var relevantTraining = List[String]()
   var sumcf = 0.0
 
   var corpusSize = 0
@@ -35,8 +33,6 @@ object RetrievalSystem {
     val mleRanking = new Ranking(n, queries.size)
 
     // Read qrels
-    var currentTopic = -1
-    var countDocs = 0
     val relevantDocs = Source.fromFile(qrelsPath)
         .getLines
         .filter(_.endsWith("1"))
@@ -44,25 +40,7 @@ object RetrievalSystem {
         .map(_.split(" "))
         .groupBy(_.head)
         .mapValues(l => l.map(_.apply(2)).toSet)
-    /*for (line <- Source.fromFile(qrelsPath).getLines) {
-      val lineSplit = line.split("\\s+")
-      val topic = lineSplit.apply(0).toInt
-      if(topic != currentTopic)
-        currentTopic = topic
-      val document = lineSplit.apply(2)
-      val relevance = lineSplit.last.toInt
-      if (relevance == 1) {
-        relevantTraining ::= document
-        topicProba.update(topic, topicProba.getOrElse(topic, 0.0)+1)
-     // println(topicProba)
-        countDocs += 1
-      }
-    }
-    
     // First pass
-    topicProba.transform{ (key, value) => value/countDocs }
-    val sumProba = topicProba.values.sum*/
-   // println(sumProba)
     var corpus = new TipsterCorpusIterator(path)
     while (corpus.hasNext && corpusSize < 100) {
       val doc = corpus.next
@@ -125,7 +103,7 @@ object RetrievalSystem {
   def MLE(tfs: Map[String, Int], queries: List[List[String]]) = {
     val scores = ArrayBuffer[Double]()
     val sumtf = tfs.values.sum.toDouble
-    val lambda = Math.max(1 - (tfs.keys.size.toDouble - docminlen) / (docmaxlen - docminlen), 0.1)
+    val lambda = 0.5//Math.max(1 - (tfs.keys.size.toDouble - docminlen) / (docmaxlen - docminlen), 0.1)
     for (q <- queries) {
       var ws = tfs.keySet & q.toSet
       val score = ws.map(w => Math.log10(1 + ((1.0 - lambda) / lambda))
