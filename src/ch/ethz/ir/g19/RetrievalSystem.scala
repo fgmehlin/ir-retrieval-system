@@ -5,8 +5,6 @@ import ch.ethz.dal.tinyir.io._
 import ch.ethz.dal.tinyir.lectures._
 import ch.ethz.dal.tinyir.processing._
 import io.Source
-import ch.ethz.dal.tinyir.util.StopWatch
-
 
 import scala.collection.mutable.ArrayBuffer
 import scala.collection.mutable.{ Map => MutMap }
@@ -24,60 +22,49 @@ object RetrievalSystem {
   var docmaxlen = 0
 
   def main(args: Array[String]) {
-  
     val start = System.currentTimeMillis()
-    
-  /*  val originalQueries = List(//new Query("More than 150 former officers "/* + "of theoverthrown South Vietnamese government have been released from are-education camp after 13 years of detention, the official VietnamNews Agency reported Saturday.   The report from Hanoi, monitored in Bangkok, did not givespecific figures, but said those freed Friday included anex-Cabinet minister, a deputy minister, 10 generals, 115field-grade officers and 25 chaplains.   It quoted Col. Luu Van Ham, director of the Nam Ha camp south ofHanoi, as saying all 700 former South Vietnamese officials who hadbeen held at the camp now have been released.   They were among 1,014 South Vietnamese who were to be releasedfrom re-education camps under an amnesty announced by the Communistgovernment to mark Tet, the lunar new year that begins Feb. 17.   The Vietnam News Agency report said many foreign journalists anda delegation from the Australia-Vietnam Friendship"*/),
-    //  new Query("new, campaign, aims, turn, tables, coke's, centralargument, fast-food, chains, shouldn't, sell, pepsi, fromtheir, fountain, spigots, because, effectively, supports, acompetitor, pepsi, --, owner, pizza, hut, taco, bell, andkentucky, fried, chicken, --, also, nation's, largestrestaurant, operator, as, one, recent, coke, ad, puts, if, apepsico, restaurant, your, competition, every, time, you, servepepsi, you're, pouring, money, into, your, competitor's, pocket, pepsi's, new, ad, which, being, run, major, restauranttrade, magazine, suggests, coke, itself, hardly, withoutvested, interests, restaurants, calling, coke, mccoke, thead, points, out, mcdonald's, coke's, biggest, customer, addressing, restaurant, operators, ad, says, your, biggestcompetitor, mcdonald's,  coke, mcdonald's, no, 1, ally, effort, win, customers, you, coke, pepsi, ad, says, we, doubt, they'll, help, yousucceed, mcdonald's, expense, final, zinger, to, coke, if, you're, not, mcdonald's, your, business, may, mean, mcnothing,  responds, coke, pepsi, trying, do, anything, can, toovercome, harsh, reality, no, business, has, ever, beensuccessful, long, competing, its, own, customers, ad, campaign, follows, coke's, virtual, gutting, pepsi'smajor, fountain, customers, past, two, weeks, coke, hasswiped, pepsi's, biggest, fountain, client, grand, metropolitanplc's, burger, king, corp, unit, has, won, major, accounts, fromtw, services, inc, food-service, company, largestfranchisee, hardee's, food, systems, inc, unit, imascoltd, earlier, this, year, wendy's, international, inc, announcedit, would, put, coke, instead, pepsi, its, company-ownedrestaurants, starting, 1991, pepsi's, fountain, thrust, has, been, blunted, says, emanuelgoldman, painewebber, inc, analyst, fountain, war, generally, more, important, volumeand, visibility, than, profitability, major, accounts, thetwo, rivals, compete, so, fiercely, contracts, theirprofit, margins, typically, less, generous, than, usual, beverage, analysts, say, but, when, customer, scans, orderboards, mcdonald's, no, 1, fast-food, chain, runsjoint, advertising, promotions, coke, soft-drinkcompany, gains, invaluable, exposure, loss, visibility, will, hurt, pepsi's, efforts, narrowcoke's, fountain, lead, starting, out, soda-fountainbusiness, more, than, century, ago, coca-cola, has, enjoyedstrong, dominance, area, ever, since, coke, currentlycontrols, about, 60%, fountain, business, --, more, thandouble, pepsi's, share, but, during, 1980s, pepsi, had, startedto, make, significant, inroads, into, fountain, market, particularly, winning, burger, king, contract, as, those, gains, now, unravel, some, beverage, analysts, areskeptical, about, appeal, pepsi's, new, campaign, i, thinkthe, fountain, business, important, coke, they, will, dowhatever, they, can, win, new, accounts, says, michael, bellas, president, beverage, marketing, corp, i, think, they'll, becompetitive, right, down, line, {on, smaller, restaurants}, withpepsi, but, clearly, mcdonald's, also, important, coke, itaccounts, about, 5%, all, coke's, u, s, soft-drink, volume, about, 15%, its, fountain, business, according, topainewebber, when, mcdonald's, opened, its, first, restaurantin, soviet, union, donald, r, keough, coca-cola's, president, flew, moscow, be, hand, festivities"),
-      //new Query("ripples Iowa poll drug"),
-      //new Query("drug ripples Guadalajara"),
-     // new Query("Airbus Subsidies"),
-      new Query("Airbus Subsidies"))*/
-    
-    
-    
- //   val queries = originalQueries.map(q => normalize(q.qterms))
-
-    
 
     val path = "tipster/zips"
     val qrelsPath = "tipster/qrels"
     val topicsQueries = "tipster/topics"
-    
+
     val testQueries = QueryReader.readQuery(topicsQueries)
-    val queries = testQueries.map(q => normalize(q.qterms)) 
-    println("query list size : " +  queries.size)
-    
+    val queries = testQueries.map(q => normalize(q._2.qterms)) 
+
     val tfidfRanking = new Ranking(n, queries.size)
     val mleRanking = new Ranking(n, queries.size)
-    
-    
+
     // Read qrels
-    var currentTopic = 0
+    var currentTopic = -1
     var countDocs = 0
-    for(line <- Source.fromFile(qrelsPath).getLines()){
+    val relevantDocs = Source.fromFile(qrelsPath)
+        .getLines
+        .filter(_.endsWith("1"))
+        .toList
+        .map(_.split(" "))
+        .groupBy(_.head)
+        .mapValues(l => l.map(_.apply(2)).toSet)
+    /*for (line <- Source.fromFile(qrelsPath).getLines) {
       val lineSplit = line.split("\\s+")
       val topic = lineSplit.apply(0).toInt
       if(topic != currentTopic)
         currentTopic = topic
       val document = lineSplit.apply(2)
-      val relevance = lineSplit.apply(3).toInt
-      if(relevance == 1){
+      val relevance = lineSplit.last.toInt
+      if (relevance == 1) {
         relevantTraining ::= document
         topicProba.update(topic, topicProba.getOrElse(topic, 0.0)+1)
      // println(topicProba)
-        countDocs+=1
+        countDocs += 1
       }
     }
     
-    
-  // First pass
-    
+    // First pass
     topicProba.transform{ (key, value) => value/countDocs }
-    val sumProba = topicProba.values.sum
+    val sumProba = topicProba.values.sum*/
    // println(sumProba)
     var corpus = new TipsterCorpusIterator(path)
-    while (corpus.hasNext && corpusSize < 10000) {
+    while (corpus.hasNext && corpusSize < 100) {
       val doc = corpus.next
       val tokens = normalize(doc.tokens)
       val tf = TermFrequencies.tf(tokens)
@@ -94,7 +81,7 @@ object RetrievalSystem {
     // Second pass
     corpusSize = 0
     corpus = new TipsterCorpusIterator(path)
-    while (corpus.hasNext && corpusSize < 10000) {
+    while (corpus.hasNext && corpusSize < 100) {
       val doc = corpus.next
       val tokens = normalize(doc.tokens)
       // tfidf
@@ -107,16 +94,12 @@ object RetrievalSystem {
     }
     println(tfidfRanking)
     println(mleRanking)
-    
-    
-    
+
     val stop = System.currentTimeMillis()
-    
     println("Time Elapsed : " + (stop-start).toDouble / (1000*60) + " Minutes")
-    
-    println(tfidfRanking.outputMetrics(relevantTraining.toSet))
-    println(mleRanking.outputMetrics(relevantTraining.toSet))
-    
+
+    tfidfRanking.printMetrics(testQueries.map(_._1), relevantDocs)
+    mleRanking.printMetrics(testQueries.map(_._1), relevantDocs)
   }
 
   def normalize(tokens: List[String]) =

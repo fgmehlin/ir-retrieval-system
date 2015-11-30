@@ -37,23 +37,21 @@ class Ranking(n: Int, nq: Int) {
     sortedl.toList.mkString("", "\n", "")
   }
 
-  def outputMetrics(relevant: Set[String]): (Double, Double, Double, Double) = {
+  def printMetrics(queries: List[Int], relevant: Map[String, Set[String]]) = {
     var precRec =  List[(Double, Double)]()
-    for (resultQuery <- r) {
-      val retrieved = resultQuery.map(_._2).toSet
-      val pr = PrecisionRecall.evaluate(retrieved, relevant)
+    for ((q, i) <- queries.zipWithIndex) {
+      val retrieved = r.apply(i).map(_._2).toSet
+      val pr = PrecisionRecall.evaluate(retrieved, relevant.get(q + "").get)
       val tuple = (pr.precision, pr.recall)
       precRec ::= tuple
     }
-    
-    val f1List = precRec.map(t => (2.0*(t._1*t._2))/(t._1+t._2))
+    val alpha = 0.5
+    val f1List = precRec.map(t => 1.0/(alpha / t._1 + (1.0 - alpha) / t._2))
     val avgP = (precRec.map(_._1).sum / precRec.size)
     val avgR = (precRec.map(_._2).sum / precRec.size)
     val avgF1 = (f1List.sum/f1List.size)
     val MAP = avgF1.toDouble / r.size
     
-    return (avgP, avgR, avgF1, MAP)
+    println("P=" + avgP + " R=" + avgR + " F=" + avgF1 + " MAP=" + MAP)
   }
 }
-
-
