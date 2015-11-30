@@ -6,13 +6,13 @@ import ch.ethz.dal.tinyir.lectures._
 import ch.ethz.dal.tinyir.processing._
 import io.Source
 
+import scala.collection.mutable.ArrayBuffer
 import scala.collection.mutable.{ Map => MutMap }
-import scala.collection.mutable.ListBuffer
 
 object RetrievalSystem {
-  val dfs = collection.mutable.Map[String, Int]()
-  val cfs = collection.mutable.Map[String, Int]()
-  val topicProba = collection.mutable.Map[Int, Double]()
+  val dfs = MutMap[String, Int]()
+  val cfs = MutMap[String, Int]()
+  val topicProba = MutMap[Int, Double]()
   var sumcf = 0.0
 
   var corpusSize = 0
