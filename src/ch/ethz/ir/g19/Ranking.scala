@@ -2,10 +2,12 @@ package ch.ethz.ir.g19
 
 import scala.collection.mutable.ArrayBuffer
 import scala.collection.mutable.PriorityQueue
+import ch.ethz.dal.tinyir.alerts.Query
+import ch.ethz.dal.tinyir.lectures.PrecisionRecall
 
 object MinOrder extends Ordering[Tuple2[Double, String]] {
-  def compare(x:Tuple2[Double, String], y:Tuple2[Double, String]) =
-      y._1 compare x._1
+  def compare(x: Tuple2[Double, String], y: Tuple2[Double, String]) =
+    y._1 compare x._1
 }
 
 /**
@@ -31,7 +33,27 @@ class Ranking(n: Int, nq: Int) {
   override def toString() = {
     val l = ArrayBuffer[List[Tuple2[Double, String]]]()
     r.foreach(pq => l.append(pq.toList))
-    val sortedl = l.map(_.sortBy(x => - x._1))
+    val sortedl = l.map(_.sortBy(x => -x._1))
     sortedl.toList.mkString("", "\n", "")
   }
+
+  def outputMetrics(relevant: Set[String]): (Double, Double, Double, Double) = {
+    var precRec =  List[(Double, Double)]()
+    for (resultQuery <- r) {
+      val retrieved = resultQuery.map(_._2).toSet
+      val pr = PrecisionRecall.evaluate(retrieved, relevant)
+      val tuple = (pr.precision, pr.recall)
+      precRec ::= tuple
+    }
+    
+    val f1List = precRec.map(t => (2.0*(t._1*t._2))/(t._1+t._2))
+    val avgP = (precRec.map(_._1).sum / precRec.size)
+    val avgR = (precRec.map(_._2).sum / precRec.size)
+    val avgF1 = (f1List.sum/f1List.size)
+    val MAP = avgF1.toDouble / r.size
+    
+    return (avgP, avgR, avgF1, MAP)
+  }
 }
+
+

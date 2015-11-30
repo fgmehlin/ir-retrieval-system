@@ -68,6 +68,8 @@ object RetrievalSystem {
         countDocs+=1
       }
     }
+    
+    
   
     
     topicProba.transform{ (key, value) => value/countDocs }
@@ -105,9 +107,14 @@ object RetrievalSystem {
     println(tfidfRanking.r)
     println(mleRanking.r)
     
+    
+    
     val stop = System.currentTimeMillis()
     
     println("Time Elapsed : " + (stop-start).toDouble / (1000*60) + " Minutes")
+    
+    println(tfidfRanking.outputMetrics(relevantTraining.toSet))
+    println(mleRanking.outputMetrics(relevantTraining.toSet))
     
   }
 
