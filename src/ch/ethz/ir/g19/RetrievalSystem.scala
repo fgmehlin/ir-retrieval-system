@@ -26,7 +26,7 @@ object RetrievalSystem {
     val qrelsPath = "tipster/qrels"
     val topicsQueries = "tipster/topics"
 
-    val testQueries = QueryReader.readQuery(topicsQueries)
+    val testQueries = QueryReader.readQuery(topicsQueries).take(1)
     val queries = testQueries.map(q => normalize(q._2.qterms)) 
 
     val tfidfRanking = new Ranking(n, queries.size)
@@ -42,7 +42,7 @@ object RetrievalSystem {
         .mapValues(l => l.map(_.apply(2)).toSet)
     // First pass
     var corpus = new TipsterCorpusIterator(path)
-    while (corpus.hasNext && corpusSize < 100) {
+    while (corpus.hasNext && corpusSize < 100000) {
       val doc = corpus.next
       val tokens = normalize(doc.tokens)
       val tf = TermFrequencies.tf(tokens)
@@ -59,7 +59,7 @@ object RetrievalSystem {
     // Second pass
     corpusSize = 0
     corpus = new TipsterCorpusIterator(path)
-    while (corpus.hasNext && corpusSize < 100) {
+    while (corpus.hasNext && corpusSize < 100000) {
       val doc = corpus.next
       val tokens = normalize(doc.tokens)
       // tfidf
