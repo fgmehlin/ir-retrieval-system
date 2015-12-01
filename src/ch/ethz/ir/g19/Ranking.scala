@@ -35,6 +35,14 @@ class Ranking(n: Int, nq: Int) {
       APs += precision.sum / Math.min(currentRelevant.size, 100)
     }
     val alpha = 0.5
+    
+    println("Precision")
+    println(precisions)
+    println("Recall")
+    println(recalls)
+    println("APs")
+    println(APs)
+    
     val avgP = (precisions.sum / precisions.size)
     val avgR = (recalls.sum / recalls.size)
     val fScores = precisions.zip(recalls)
