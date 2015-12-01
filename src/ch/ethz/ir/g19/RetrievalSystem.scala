@@ -5,7 +5,8 @@ import ch.ethz.dal.tinyir.io._
 import ch.ethz.dal.tinyir.lectures._
 import ch.ethz.dal.tinyir.processing._
 import io.Source
-import breeze.linalg._
+import breeze.linalg.DenseMatrix
+import breeze.linalg.DenseVector
 
 import scala.collection.mutable.ArrayBuffer
 import scala.collection.mutable.{ Map => MutMap }
@@ -21,12 +22,16 @@ object RetrievalSystem {
     val tipsterPath = "tipster/zips"
     val qrelsPath = "tipster/qrels"
     val topicsPath = "tipster/topics"
-    val glove6b50d = "libs/glove.6b.50d.txt"
+    val glove6b50d = "glove/glove.6B.50d.txt"
     
-    val gloveRowSize = Source.fromFile(glove6b50d).getLines.size
-    val gloveArray = Source.fromFile(glove6b50d).getLines.toArray.flatMap(_.split(" ").drop(1)).map(_.toDouble)
+    val gloveRowSize = Source.fromFile(glove6b50d)("UTF-8").getLines.size
+    println(gloveRowSize)
+    val gloveArray = Source.fromFile(glove6b50d)("UTF-8").getLines.toArray.flatMap(_.split(" ").drop(1)).map(_.toDouble)
+    val gloveWordArray = Source.fromFile(glove6b50d)("UTF-8").getLines.toArray.flatMap(_.split(" ").head)
     val gloveMatrix = new DenseMatrix(gloveRowSize, 50, gloveArray)
-    println(gloveMatrix.apply(0, 0))
+    print(gloveWordArray.head)
+    
+    
     
 
     val tipsterQueries = QueryReader.readQuery(topicsPath)
@@ -80,6 +85,8 @@ object RetrievalSystem {
     val relevantDocs = QueryReader.readQrels(qrelsPath)
     tfidfRanking.printMetrics(queryids, relevantDocs)
     mleRanking.printMetrics(queryids, relevantDocs)
+    
+    
   }
 
   def normalize(tokens: List[String]) =
