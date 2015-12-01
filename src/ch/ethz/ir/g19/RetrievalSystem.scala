@@ -10,66 +10,56 @@ import scala.collection.mutable.ArrayBuffer
 import scala.collection.mutable.{ Map => MutMap }
 
 object RetrievalSystem {
-  val dfs = MutMap[String, Int]()
-  val cfs = MutMap[String, Int]()
-  var sumcf = 0.0
-
   var corpusSize = 0
   val n = 100
-  var docminlen = Integer.MAX_VALUE
-  var docmaxlen = 0
 
   def main(args: Array[String]) {
-    val start = System.currentTimeMillis()
+    var docminlen = Integer.MAX_VALUE // minimum length document
+    var docmaxlen = 0 // maximum length document
 
-    val path = "tipster/zips"
+    val tipsterPath = "tipster/zips"
     val qrelsPath = "tipster/qrels"
-    val topicsQueries = "tipster/topics"
+    val topicsPath = "tipster/topics"
 
-    val testQueries = QueryReader.readQuery(topicsQueries).take(1)
-    val queries = testQueries.map(q => normalize(q._2.qterms)) 
+    val tipsterQueries = QueryReader.readQuery(topicsPath)
+    val queries = tipsterQueries.map(q => normalize(q._1.qterms))
 
     val tfidfRanking = new Ranking(n, queries.size)
     val mleRanking = new Ranking(n, queries.size)
 
-    // Read qrels
-    val relevantDocs = Source.fromFile(qrelsPath)
-        .getLines
-        .filter(_.endsWith("1"))
-        .toList
-        .map(_.split(" "))
-        .groupBy(_.head)
-        .mapValues(l => l.map(_.apply(2).replaceAll("-", "")).toSet)
+    val start = System.currentTimeMillis()
     // First pass
-    var corpus = new TipsterCorpusIterator(path)
-    while (corpus.hasNext && corpusSize < 100000) {
+    var corpus = new TipsterCorpusIterator(tipsterPath)
+    while (corpus.hasNext && corpusSize < 100) {
       val doc = corpus.next
       print(corpusSize+"\r")
       val tokens = normalize(doc.tokens)
       val tf = TermFrequencies.tf(tokens)
-      dfStore(tf)
-      cfStore(tf)
-      docminlen = Math.min(docminlen, tf.size)
-      docmaxlen = Math.max(docmaxlen, tf.size)
+      RelevanceModels.dfStore(tf)
+      RelevanceModels.cfStore(tf)
+      docminlen = Math.min(docminlen, tf.values.sum)
+      docmaxlen = Math.max(docmaxlen, tf.values.sum)
       corpusSize += 1
     }
 
-    val idfs = TermFrequencies.idf(dfs.toMap, corpusSize)
-    sumcf = cfs.values.sum.toDouble
+    val idfs = TermFrequencies.idf(RelevanceModels.dfs.toMap, corpusSize)
+    RelevanceModels.sumCfs()
 
     // Second pass
     corpusSize = 0
-    corpus = new TipsterCorpusIterator(path)
-    while (corpus.hasNext && corpusSize < 100000) {
+    corpus = new TipsterCorpusIterator(tipsterPath)
+    while (corpus.hasNext && corpusSize < 100) {
       val doc = corpus.next
       print(corpusSize+"\r")
       val tokens = normalize(doc.tokens)
       // tfidf
       val logtfs = TermFrequencies.logtf(tokens)
-      tfidfRanking.processScores(doc.name, scoreTFIDF(logtfs, idfs, queries))
+      tfidfRanking.processScores(doc.name,
+          RelevanceModels.tfidf(logtfs, idfs, queries))
       // mle
       val tfs = TermFrequencies.tf(tokens)
-      mleRanking.processScores(doc.name, MLE(tfs, queries))
+      mleRanking.processScores(doc.name,
+          RelevanceModels.mle(tfs, queries, docminlen, docmaxlen))
       corpusSize += 1
     }
     println(tfidfRanking)
@@ -78,41 +68,12 @@ object RetrievalSystem {
     val stop = System.currentTimeMillis()
     println("Time Elapsed : " + (stop-start).toDouble / (1000*60) + " Minutes")
 
-    tfidfRanking.printMetrics(testQueries.map(_._1), relevantDocs)
-    mleRanking.printMetrics(testQueries.map(_._1), relevantDocs)
+    val queryids = tipsterQueries.map(_._2)
+    val relevantDocs = QueryReader.readQrels(qrelsPath)
+    tfidfRanking.printMetrics(queryids, relevantDocs)
+    mleRanking.printMetrics(queryids, relevantDocs)
   }
 
   def normalize(tokens: List[String]) =
     StopWords.remove(tokens.map(_.toLowerCase))
-
-  def dfStore(logtf: Map[String, Any]) =
-    dfs ++= logtf.keySet.map(t => t -> (1 + dfs.getOrElse(t, 0)))
-
-  def cfStore(tf: Map[String, Int]) =
-    cfs ++= tf.keySet.map(t => t -> (cfs.getOrElse(t, 0) + tf(t)))
-
-  /** Compute the tfidf score for all queries against a document */
-  def scoreTFIDF(logtfs: Map[String, Double], idfs: Map[String, Double],
-    queries: List[List[String]]) = {
-    val scores = ArrayBuffer[Double]()
-    for (q <- queries) {
-      scores += q.map(qword =>
-        logtfs.getOrElse(qword, 0.0) * idfs.getOrElse(qword, 0.0)).sum
-    }
-    scores.toList
-  }
-
-  def MLE(tfs: Map[String, Int], queries: List[List[String]]) = {
-    val scores = ArrayBuffer[Double]()
-    val sumtf = tfs.values.sum.toDouble
-    val lambda = 0.5//Math.max(1 - (tfs.keys.size.toDouble - docminlen) / (docmaxlen - docminlen), 0.1)
-    for (q <- queries) {
-      var ws = tfs.keySet & q.toSet
-      val score = ws.map(w => Math.log10(1 + ((1.0 - lambda) / lambda))
-                             * ((tfs.get(w).get / sumtf) / (cfs.get(w).get / sumcf))
-                  + Math.log10(lambda)).sum
-      scores += score
-    }
-    scores.toList
-  }
 }
