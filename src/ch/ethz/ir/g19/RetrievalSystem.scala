@@ -5,6 +5,7 @@ import ch.ethz.dal.tinyir.io._
 import ch.ethz.dal.tinyir.lectures._
 import ch.ethz.dal.tinyir.processing._
 import io.Source
+import breeze.linalg._
 
 import scala.collection.mutable.ArrayBuffer
 import scala.collection.mutable.{ Map => MutMap }
@@ -20,6 +21,13 @@ object RetrievalSystem {
     val tipsterPath = "tipster/zips"
     val qrelsPath = "tipster/qrels"
     val topicsPath = "tipster/topics"
+    val glove6b50d = "libs/glove.6b.50d.txt"
+    
+    val gloveRowSize = Source.fromFile(glove6b50d).getLines.size
+    val gloveArray = Source.fromFile(glove6b50d).getLines.toArray.flatMap(_.split(" ").drop(1)).map(_.toDouble)
+    val gloveMatrix = new DenseMatrix(gloveRowSize, 50, gloveArray)
+    println(gloveMatrix.apply(0, 0))
+    
 
     val tipsterQueries = QueryReader.readQuery(topicsPath)
     val queries = tipsterQueries.map(q => normalize(q._1.qterms))
@@ -30,9 +38,9 @@ object RetrievalSystem {
     val start = System.currentTimeMillis()
     // First pass
     var corpus = new TipsterCorpusIterator(tipsterPath)
-    while (corpus.hasNext && corpusSize < 100) {
+    while (corpus.hasNext) {
       val doc = corpus.next
-      print(corpusSize+"\r")
+    //  print(corpusSize+"\r")
       val tokens = normalize(doc.tokens)
       val tf = TermFrequencies.tf(tokens)
       RelevanceModels.dfStore(tf)
@@ -48,9 +56,9 @@ object RetrievalSystem {
     // Second pass
     corpusSize = 0
     corpus = new TipsterCorpusIterator(tipsterPath)
-    while (corpus.hasNext && corpusSize < 100) {
+    while (corpus.hasNext) {
       val doc = corpus.next
-      print(corpusSize+"\r")
+     // print(corpusSize+"\r")
       val tokens = normalize(doc.tokens)
       // tfidf
       val logtfs = TermFrequencies.logtf(tokens)
