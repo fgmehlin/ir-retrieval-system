@@ -27,13 +27,16 @@ object RetrievalSystem {
     val gloveRowSize = Source.fromFile(glove6b50d)("UTF-8").getLines.size
     println(gloveRowSize)
     val gloveArray = Source.fromFile(glove6b50d)("UTF-8").getLines.toArray.flatMap(_.split(" ").drop(1)).map(_.toDouble)
-    val gloveWordArray = Source.fromFile(glove6b50d)("UTF-8").getLines.toArray.flatMap(_.split(" ").head)
+    val gloveWordArray = Source.fromFile(glove6b50d)("UTF-8").getLines.toArray.flatMap(_.split(" ").take(1))
     val gloveMatrix = new DenseMatrix(gloveRowSize, 50, gloveArray)
-    print(gloveWordArray.head)
+
     
-    
+    val testQueryWMD1 = new Query("Obama speaks to the media in Illinois")
+    val testQueryWMD2 = new Query("The President greets the press in Chicago")
     
 
+    
+    
     val tipsterQueries = QueryReader.readQuery(topicsPath)
     val queries = tipsterQueries.map(q => normalize(q._1.qterms))
 
@@ -45,7 +48,7 @@ object RetrievalSystem {
     var corpus = new TipsterCorpusIterator(tipsterPath)
     while (corpus.hasNext) {
       val doc = corpus.next
-    //  print(corpusSize+"\r")
+      print(corpusSize+"\r")
       val tokens = normalize(doc.tokens)
       val tf = TermFrequencies.tf(tokens)
       RelevanceModels.dfStore(tf)
@@ -63,7 +66,7 @@ object RetrievalSystem {
     corpus = new TipsterCorpusIterator(tipsterPath)
     while (corpus.hasNext) {
       val doc = corpus.next
-     // print(corpusSize+"\r")
+      print(corpusSize+"\r")
       val tokens = normalize(doc.tokens)
       // tfidf
       val logtfs = TermFrequencies.logtf(tokens)
