@@ -1,0 +1,68 @@
+\documentclass[a4paper, 11pt]{article}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{algorithm2e}
+\usepackage[pdftex]{hyperref}
+
+% Lengths and indenting
+\setlength{\textwidth}{16.5cm}
+\setlength{\marginparwidth}{1.5cm}
+\setlength{\parindent}{0cm}
+\setlength{\parskip}{0.15cm}
+\setlength{\textheight}{25cm}
+\setlength{\oddsidemargin}{0cm}
+\setlength{\evensidemargin}{\oddsidemargin}
+\setlength{\topmargin}{0cm}
+\setlength{\headheight}{0cm}
+\setlength{\headsep}{0cm}
+
+
+
+
+\renewcommand{\familydefault}{\sfdefault}
+
+\title{Information Retrieval - Assignment II - Retrieval System \\ Fall Semester 2015}
+\author{fgmehlin@student.ethz.ch\\ malvaro@student.ethz.ch\\}
+\date{\today}
+
+
+
+
+\begin{document}
+\maketitle
+
+\section{Models} 
+For this project we implemented the two following models :
+\begin{itemize}
+\item Term-based : TF-IDF
+\item Language Model : Maximum Likelihood + Smoothing
+\end{itemize}
+
+\section{Metrics}
+We obtained the following metrics for the training queries : 
+
+\begin{table}[!ht]
+\centering
+\label{my-label}
+\begin{tabular}{l|c|c|}
+\cline{2-3}
+\textbf{}                                          & \textbf{TF-IDF} & \textbf{MLE + Smoothing} \\ \hline
+\multicolumn{1}{|l|}{\textbf{Average Precision }} & 0.09725         & 0.15300                  \\ \hline
+\multicolumn{1}{|l|}{\textbf{Average Recall }}    & 0.04901         & 0.06403                  \\ \hline
+\multicolumn{1}{|l|}{\textbf{Average F1 }}        & 0.05818         & 0.07776                  \\ \hline
+\multicolumn{1}{|l|}{\textbf{MAP }}               & 0.03466         & 0.06769                  \\ \hline
+\end{tabular}
+\end{table}
+
+\section{Remarks} 
+
+\begin{itemize}
+\item We bounded the AP denominator as MIN((TP+FN), 100).
+\item We did not use stemming as it did not improve the score
+\item Computation takes between 21 and 25 minutes
+\item We unzipped all the subzips, namely  zips-1.zip to zips-7.zip in a folder called zips
+\item The main method is located in the file "RetrievalSystem.scala" (the qrels/topics/zips paths might need to be adapted)
+\end{itemize}
+
+\end{document} 
+

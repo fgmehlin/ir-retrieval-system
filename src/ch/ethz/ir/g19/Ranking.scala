@@ -17,9 +17,9 @@ class Ranking(n: Int, nq: Int) {
   val r = List.fill(nq)(PriorityQueue.empty(MinOrder))
 
   def printMetrics(queries: List[Int], relevant: Map[String, Set[String]]) = {
-    val precisions =  ArrayBuffer[Double]()
-    val recalls =  ArrayBuffer[Double]()
-    val APs =  ArrayBuffer[Double]()
+    val precisions = ArrayBuffer[Double]()
+    val recalls = ArrayBuffer[Double]()
+    val APs = ArrayBuffer[Double]()
     val retrieved = sortByScore.map(l => l.map(_._2))
     for ((q, i) <- queries.zipWithIndex) {
       val currentRetrieved = retrieved.apply(i)
@@ -28,25 +28,18 @@ class Ranking(n: Int, nq: Int) {
       precisions += TP / currentRetrieved.size
       recalls += TP / currentRelevant.size
       val precision = currentRetrieved
-          .zipWithIndex
-          .filter{case (doc, _) => currentRelevant.contains(doc)}
-          .zipWithIndex
-          .map(t => (t._2 + 1.0) / (t._1._2 + 1.0))
+        .zipWithIndex
+        .filter { case (doc, _) => currentRelevant.contains(doc) }
+        .zipWithIndex
+        .map(t => (t._2 + 1.0) / (t._1._2 + 1.0))
       APs += precision.sum / Math.min(currentRelevant.size, 100)
     }
     val alpha = 0.5
-    
-    println("Precision")
-    println(precisions)
-    println("Recall")
-    println(recalls)
-    println("APs")
-    println(APs)
-    
+
     val avgP = (precisions.sum / precisions.size)
     val avgR = (recalls.sum / recalls.size)
     val fScores = precisions.zip(recalls)
-        .map(t => 1.0/(alpha / t._1 + (1.0 - alpha) / t._2))
+      .map(t => 1.0 / (alpha / t._1 + (1.0 - alpha) / t._2))
     val avgF = (fScores.sum / fScores.size)
     val MAP = APs.sum / queries.size
 
@@ -76,5 +69,19 @@ class Ranking(n: Int, nq: Int) {
   override def toString() = {
     val sortedl = sortByScore
     sortedl.toList.mkString("\n")
+  }
+
+  def printSubmission(topicIDs: List[Int]) = {
+    val sortedl = sortByScore
+
+    sortedl
+      .zipWithIndex
+      .foreach {
+        case (list, index) => list
+          .zipWithIndex.foreach {
+            case ((score, doc), scoreIndex) => println(topicIDs.apply(index) + " " + (scoreIndex+1) + " " + doc)
+          }
+      }
+
   }
 }

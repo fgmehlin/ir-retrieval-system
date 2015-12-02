@@ -24,11 +24,17 @@ object QueryReader {
       .filter(_.startsWith("<num>"))
       .map(l => l.split("Number:\\s+").last.trim.toInt)
       .toList
+      
+      
     /* val queries = Source.fromFile(path)
         .getLines
         .filter(_.startsWith("<title>"))
         .map(l => new Query(v))
         .toList*/
+      
+      // As the queries could be written on more than one line, 
+      // we had to change the above functional code to the below ugly one.
+      
     for (line <- Source.fromFile(path).getLines()) {
       if (topicFound) {
         if (!line.isEmpty())
